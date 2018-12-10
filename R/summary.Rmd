@@ -1,0 +1,76 @@
+---
+title: "Advent of Code 2018"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 1
+    highlight: tango
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+suppressPackageStartupMessages({
+  library(data.table)
+  library(tidyverse)
+})
+knitr::knit_theme$set(knitr::knit_theme$get("leo"))
+```
+
+```{r echo=FALSE}
+here::here("R") %>% fs::dir_ls() %>% walk(knitr::read_chunk)
+```
+
+# Day 1
+
+### Part 1
+```{r day1part1}
+
+```
+
+### Part 2
+```{r day1part2}
+
+```
+
+# Day 2
+
+### Part 1
+```{r day2part1}
+
+```
+
+### Part 2
+
+# Day 3
+
+### Part 1
+```{r day3part1}
+
+```
+
+### Part 1
+```{r day3part2}
+
+```
+# Day 4
+
+### Part 1
+```{r day4part1}
+
+```
+
+### Part 2
+```{r day4part2}
+
+```
+# Day 5
+
+### Part 1
+```{r day5part1, cache=TRUE}
+
+```
+
+### Part 2
+```{r day5part2, cache=TRUE}
+
+```

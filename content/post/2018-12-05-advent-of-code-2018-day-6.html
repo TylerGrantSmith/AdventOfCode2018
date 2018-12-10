@@ -1,0 +1,218 @@
+---
+title: Advent of Code 2018 - Day 6
+author: Tyler Grant Smith
+date: '2018-12-05'
+slug: advent-of-code-2018-day-6
+categories:
+  - examples
+  - r
+tags: []
+---
+
+
+
+<div id="day-1" class="section level1">
+<h1>Day 1</h1>
+<div id="part-1" class="section level3">
+<h3>Part 1</h3>
+<pre class="r"><code>input &lt;- data.table::fread(here::here(&quot;input&quot;,&quot;day1.txt&quot;),header = F)
+x &lt;- input$V1
+sum(x)</code></pre>
+<pre><code>## [1] 479</code></pre>
+</div>
+<div id="part-2" class="section level3">
+<h3>Part 2</h3>
+<pre class="r"><code>l &lt;- x
+cs &lt;- cumsum(l)[duplicated(cumsum(l))]
+i &lt;- 0
+while(length(cs) == 0) {
+  i &lt;- i+1
+  l &lt;- c(l, x)
+  cs &lt;- cumsum(l)[duplicated(cumsum(l))]
+}
+
+cs[[1]]</code></pre>
+<pre><code>## [1] 66105</code></pre>
+</div>
+</div>
+<div id="day-2" class="section level1">
+<h1>Day 2</h1>
+<div id="part-1-1" class="section level3">
+<h3>Part 1</h3>
+<pre class="r"><code>library(data.table)
+library(stringr)
+library(dplyr)
+library(tidyr)
+
+boxes &lt;- fread(here::here(&quot;input&quot;,&quot;day2.txt&quot;),header = F) %&gt;% set_names(&quot;box&quot;)
+box_count &lt;- cbind(boxes, boxes[, purrr::map(letters, ~str_count(box, .)) %&gt;% set_names(letters)])
+box_count[,.(count2 = any(.SD == 2), count3 = any(.SD==3)), by = box, .SDcols = letters][,.(sum(count2),sum(count3))] %&gt;% 
+  reduce(`*`)</code></pre>
+<pre><code>## [1] 6642</code></pre>
+<pre class="r"><code>expand.grid(boxes[[1]],boxes[[1]]) %&gt;% 
+  as.tibble() %&gt;% 
+  mutate_all(funs(str_split(.,&quot;&quot;))) %&gt;% 
+  mutate(diff = map2_int(Var1, Var2, ~sum(.x != .y))) %&gt;% 
+  filter(diff == 1) %&gt;% 
+  slice(1) %&gt;% 
+  select(-diff) %&gt;% 
+  unnest %&gt;% 
+  filter(Var1 == Var2) %&gt;% 
+  pull(Var1) %&gt;% 
+  reduce(paste0)</code></pre>
+<pre><code>## [1] &quot;cvqlbidheyujgtrswxmckqnap&quot;</code></pre>
+</div>
+<div id="part-2-1" class="section level3">
+<h3>Part 2</h3>
+</div>
+</div>
+<div id="day-3" class="section level1">
+<h1>Day 3</h1>
+<div id="part-1-2" class="section level3">
+<h3>Part 1</h3>
+<pre class="r"><code># Part 1
+input &lt;- 
+  fread(here::here(&quot;input&quot;,&quot;day3.txt&quot;), header = F, sep = &quot; &quot;) %&gt;% 
+  set_names(c(&quot;id&quot;,&quot;@&quot;,&quot;location&quot;,&quot;dimensions&quot;))
+
+cleaned &lt;-
+  input %&gt;% 
+  select(-`@`) %&gt;% 
+  mutate(location = 
+           sub(&quot;\\:&quot;,&quot;&quot;, location)) %&gt;% 
+  separate(location, c(&quot;left&quot;,&quot;top&quot;), &quot;,&quot;) %&gt;% 
+  separate(dimensions, c(&quot;width&quot;,&quot;height&quot;), &quot;x&quot;) %&gt;%
+  mutate_at(vars(-id),as.integer) %&gt;% 
+  setDT()
+
+cleaned[,expand.grid(left:(left+width-1), top:(top+height-1)), by = id] %&gt;% 
+  .[,.N,by = .(Var1, Var2)] %&gt;% 
+  .[N &gt; 1] %&gt;% 
+  nrow()</code></pre>
+<pre><code>## [1] 118539</code></pre>
+</div>
+<div id="part-1-3" class="section level3">
+<h3>Part 1</h3>
+<pre class="r"><code># Part 2
+grid &lt;- cleaned[,expand.grid(left:(left+width-1), top:(top+height-1)), by = id]
+dupes &lt;- grid[,.(id, .N),by = .(Var1, Var2)][N &gt; 1]
+setdiff(grid$id, dupes$id)</code></pre>
+<pre><code>## [1] &quot;#1270&quot;</code></pre>
+</div>
+</div>
+<div id="day-4" class="section level1">
+<h1>Day 4</h1>
+<div id="part-1-4" class="section level3">
+<h3>Part 1</h3>
+<pre class="r"><code>library(lubridate)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;lubridate&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:data.table&#39;:
+## 
+##     hour, isoweek, mday, minute, month, quarter, second, wday,
+##     week, yday, year</code></pre>
+<pre><code>## The following object is masked from &#39;package:base&#39;:
+## 
+##     date</code></pre>
+<pre class="r"><code>input &lt;- 
+  fread(here::here(&quot;input&quot;,&quot;day4.txt&quot;), header = F, sep = &quot; &quot;, fill = T) %&gt;% 
+  .[,.(DATE = map(V1, ymd),
+       TIME = map(V2, hm),
+       V3, V4, V5, V6)] %&gt;% 
+  .[, .(YEAR   = DATE %&gt;% map_dbl(year),
+        MONTH  = DATE %&gt;% map_dbl(month),
+        DAY    = DATE %&gt;% map_dbl(day),
+        HOUR   = TIME %&gt;% map_dbl(hour),
+        MINUTE = TIME %&gt;% map_dbl(minute),
+        V3, V4, V5, V6)]
+
+input[V3 == &quot;Guard&quot;, GUARD := V4 %&gt;% str_remove(&quot;#&quot;) %&gt;% as.numeric]
+input[,ACTION:= V3]
+setkeyv(input, c(&quot;YEAR&quot;,&quot;MONTH&quot;,&quot;DAY&quot;,&quot;HOUR&quot;,&quot;MINUTE&quot;, &quot;GUARD&quot;))
+
+input[, GUARD := GUARD[1], .(cumsum(!is.na(GUARD)))] ## Neat fill
+input[, NIGHT_OF := if_else(HOUR==23, shift(DAY,1, type = &quot;lead&quot;), DAY)]
+
+input[, START := if_else(HOUR==23, 0, MINUTE), by = .(YEAR, MONTH, NIGHT_OF)]
+input[, END := shift(MINUTE, 1, type = &quot;lead&quot;, fill = 59), by = .(YEAR, MONTH, NIGHT_OF)]
+
+input[, DURATION := END-START]
+
+times &lt;- data.table(TIME = 0:59)
+sleepiest_guard &lt;- input[,sum(DURATION),GUARD][order(-V1)][1, GUARD]
+sleepiest_guard_dt &lt;- input[ACTION == &quot;falls&quot;][GUARD==sleepiest_guard]
+
+sleepiest_guard_sleepiest_minute &lt;-
+  sleepiest_guard_dt[times, 
+                     on = .(START &lt;= TIME), 
+                     .(GUARD, TIME, START, END, DURATION,
+                       cndn = (TIME &gt;= START) &amp; (TIME &lt; END)),
+                     allow.cartesian = T][cndn == T][,.N,TIME][order(-N)][1, TIME]
+
+
+
+sleepiest_guard * sleepiest_guard_sleepiest_minute</code></pre>
+<pre><code>## [1] 94040</code></pre>
+</div>
+<div id="part-2-2" class="section level3">
+<h3>Part 2</h3>
+<pre class="r"><code>sleep_rows &lt;- input[ACTION == &quot;falls&quot;]
+sleep_rows[times, 
+           on = .(START &lt;= TIME), 
+           .(GUARD, TIME, START, END, DURATION,
+             cndn = (TIME &gt;= START) &amp; (TIME &lt; END)),
+           allow.cartesian = T][cndn == T][,.N,.(TIME, GUARD)][order(-N)][1] %&gt;% 
+  .[,TIME * GUARD]</code></pre>
+<pre><code>## [1] 39940</code></pre>
+</div>
+</div>
+<div id="day-5" class="section level1">
+<h1>Day 5</h1>
+<div id="part-1-5" class="section level3">
+<h3>Part 1</h3>
+<pre class="r"><code>library(stringr)
+library(foreach)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;foreach&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:purrr&#39;:
+## 
+##     accumulate, when</code></pre>
+<pre class="r"><code>input &lt;- 
+  readr::read_file(here::here(&quot;input&quot;,&quot;day5.txt&quot;))
+
+input &lt;- input %&gt;% str_remove(&quot;\n&quot;)
+
+annihilators &lt;- paste0(c(letters, LETTERS), c(LETTERS, letters), collapse = &quot;|&quot;)
+
+output &lt;- input
+while(str_detect(output, annihilators)) {
+  output &lt;- str_replace_all(output, annihilators, &quot;&quot;)
+}
+
+nchar(output)</code></pre>
+<pre><code>## [1] 11636</code></pre>
+</div>
+<div id="part-2-3" class="section level3">
+<h3>Part 2</h3>
+<pre class="r"><code>doParallel::registerDoParallel(10)
+
+results &lt;-
+  foreach (letter = letters,
+           .final = rbindlist,
+           .packages = &#39;stringr&#39;)  %dopar% {
+             remove = paste0(letter,&quot;|&quot;,toupper(letter))
+             output &lt;- str_replace_all(input, remove, &quot;&quot;)
+             
+             while(str_detect(output, annihilators)) {
+               output &lt;- str_replace_all(output, annihilators, &quot;&quot;)
+             }
+             
+             list(letter = letter, nchar = nchar(output))
+           }
+doParallel::stopImplicitCluster()
+
+results[order(nchar)][1]</code></pre>
+<pre><code>##    letter nchar
+## 1:      k  5302</code></pre>
+</div>
+</div>
